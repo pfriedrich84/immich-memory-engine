@@ -1,0 +1,10 @@
+services:
+  memory-engine:
+    build: .
+    container_name: immich-memory-engine
+    env_file:
+      - .env
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./output:/app/output
+    command: ["scan", "--config", "/app/config.yaml"]

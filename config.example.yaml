@@ -1,0 +1,40 @@
+immich:
+  url: "http://immich.local:2283"
+  users:
+    - name: "paul"
+      api_key_env: "IMMICH_API_KEY_PAUL"
+    - name: "wife"
+      api_key_env: "IMMICH_API_KEY_WIFE"
+
+ollama:
+  enabled: true
+  url: "http://ollama.local:11434"
+  model: "gemini4:e4b"
+
+clustering:
+  time_gap_hours: 6
+  location_radius_meters: 300
+  min_assets_per_event: 8
+  max_event_duration_days: 3
+
+merge:
+  require_time_overlap: true
+  max_time_gap_hours: 2
+  require_location_match: true
+  location_radius_meters: 300
+
+home_location:
+  enabled: true
+  lat: 48.0
+  lon: 16.0
+  radius_meters: 500
+  outside_home_merge: true
+  inside_home_merge: false
+  inside_home_event_detection: true
+  inside_home_min_assets: 20
+  inside_home_max_duration_hours: 8
+
+output:
+  dir: "output"
+  album_prefix: "Vorschlag: "
+  dry_run_default: true
