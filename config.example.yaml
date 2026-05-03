@@ -1,5 +1,7 @@
 immich:
-  url: "http://immich.local:2283"
+  # Required. Loaded from .env by Docker Compose and expanded by memory-engine.
+  # Target/tested Immich API assumption: 2.7.5 metadata search endpoint.
+  url: "${IMMICH_URL}"
   users:
     - name: "paul"
       api_key_env: "IMMICH_API_KEY_PAUL"
@@ -7,9 +9,10 @@ immich:
       api_key_env: "IMMICH_API_KEY_WIFE"
 
 ollama:
-  enabled: true
-  url: "http://ollama.local:11434"
-  model: "gemini4:e4b"
+  # Future milestone only; current scan does not call Ollama.
+  enabled: "${OLLAMA_ENABLED:-false}"
+  url: "${OLLAMA_URL:-http://ollama:11434}"
+  model: "${OLLAMA_MODEL:-llama3.1}"
 
 clustering:
   time_gap_hours: 6
@@ -35,6 +38,9 @@ home_location:
   inside_home_max_duration_hours: 8
 
 output:
-  dir: "output"
-  album_prefix: "Vorschlag: "
-  dry_run_default: true
+  # Docker Compose mounts ./output to /app/output. Keep this as output unless the compose volume is changed too.
+  dir: "${MEMORY_ENGINE_OUTPUT_DIR:-output}"
+  album_prefix: "${MEMORY_ENGINE_ALBUM_PREFIX:-Vorschlag: }"
+  dry_run_default: "${MEMORY_ENGINE_DRY_RUN_DEFAULT:-true}"
+  debug: "${MEMORY_ENGINE_DEBUG:-false}"
+  debug_dir: "${MEMORY_ENGINE_DEBUG_DIR:-output/debug}"

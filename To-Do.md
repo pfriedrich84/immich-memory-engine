@@ -8,12 +8,12 @@ Build an MVP for automatic Immich album suggestions using multi-user asset scans
 
 ## 1. Immich API Client
 
-- [ ] Implement httpx client
-- [ ] Authenticate via `x-api-key`
-- [ ] Support multiple configured users/API keys
-- [ ] Implement asset pagination
-- [ ] Filter by date range
-- [ ] Save `output/assets.json`
+- [x] Implement httpx client
+- [x] Authenticate via `x-api-key`
+- [x] Support multiple configured users/API keys
+- [x] Implement asset pagination
+- [x] Filter by date range
+- [x] Save `output/assets.json`
 
 Definition of done:
 
@@ -25,11 +25,11 @@ produces normalized assets with `id`, `owner`, `taken_at`, optional GPS fields.
 
 ## 2. Data Normalization
 
-- [ ] Map Immich asset JSON to `Asset`
-- [ ] Handle missing GPS safely
-- [ ] Handle image/video type
-- [ ] Preserve owner name
-- [ ] Add tests for field mapping
+- [x] Map Immich asset JSON to `Asset`
+- [x] Handle missing GPS safely
+- [x] Handle image/video type
+- [x] Preserve owner name
+- [x] Add tests for field mapping
 
 ## 3. Time + GPS Clustering
 

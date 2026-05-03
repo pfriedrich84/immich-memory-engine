@@ -1,69 +1,98 @@
 # Immich Memory Engine
 
-Turn your Immich photo library into structured memories.
+Docker-only MVP tooling for turning an Immich photo library into structured memory/album proposal artifacts.
 
-Immich Memory Engine is a local-first MVP for automatic event detection, album suggestions, and timeline-style memory generation using time, location, multi-user signals, and optional Ollama-generated titles/descriptions.
+## Current status and safety
 
-## MVP Goal
+- **Supported runtime/setup:** Docker Compose only. Local Python/Poetry is not a required user workflow.
+- **Immich API assumption:** tested/designed for Immich **2.7.5**, using `x-api-key` auth and the metadata search API.
+- **Read-only scan:** `scan` only reads from Immich and writes local files under `output/`.
+- **No Immich writes yet:** album creation is not implemented. Future writes must require an explicit `apply --no-dry-run`.
+- **Trust boundary:** until Milestones 2-4 are implemented, only `output/assets.json` should be treated as trustworthy. `clusters.json` and `proposals.json` are placeholder artifacts.
 
-Create useful Immich album proposals from roughly 10k photos across two Immich accounts, while avoiding bad mega-clusters such as months of home photos.
-
-## Core Features Planned
-
-- Multi-user Immich scan via separate API keys
-- Time + GPS clustering
-- Home-location special handling
-- JSON and Markdown proposal reports
-- Optional Ollama naming
-- Dry-run by default
-- Idempotent album creation with prefix, e.g. `Vorschlag: ...`
-- External photos workflow via normal Immich upload
-
-## Quick Start
+## Operator quick start
 
 ```bash
 cp .env.example .env
 cp config.example.yaml config.yaml
-# edit both files
+```
 
+Edit `.env`:
+
+- `IMMICH_URL` points to your Immich server, for example `http://immich-server:2283`.
+- Set one API key per configured user, for example `IMMICH_API_KEY_PAUL` and `IMMICH_API_KEY_WIFE`.
+
+Edit `config.yaml` if you want different user names/env var names. Do **not** duplicate the Immich URL in YAML; keep `url: "${IMMICH_URL}"` so Docker Compose's env file drives the target.
+
+Run a scan:
+
+```bash
 docker compose run --rm memory-engine scan --config /app/config.yaml --from 2025-01-01 --to 2025-12-31
 ```
 
-## Example Commands
+Outputs are written to `./output` on the host. Keep `MEMORY_ENGINE_OUTPUT_DIR=output` unless you also update the Compose volume mapping.
+
+## Docker-only commands
 
 ```bash
-# Scan assets and generate proposals
-memory-engine scan --config config.yaml --from 2025-01-01 --to 2025-12-31
+# Build the image
+docker compose build
 
-# Review generated proposals
-memory-engine review --input output/proposals.json
+# CLI smoke test
+docker compose run --rm memory-engine --help
 
-# Dry-run album creation, default behavior
-memory-engine apply proposal_123 --dry-run
+# Run the test suite inside Docker
+docker compose run --rm memory-engine test
 
-# Actually create album in Immich
-memory-engine apply proposal_123 --no-dry-run
+# Default compose command is a scan using /app/config.yaml
+docker compose run --rm memory-engine
 ```
 
-## Important Status
+`.env` is required by Compose and is intentionally ignored by git. Never commit `.env` or API keys.
 
-This repository is an agent-ready MVP starter. It contains the structure, docs, initial CLI and implementation stubs. The first real development target is Milestone 1: a working Immich API scan with pagination and normalized asset export.
+## For OSS contributors and coding agents
 
-## Recommended Agent Workflow
+Use Docker/Compose as the source of truth:
 
-Use Pi.dev/Codex with small prompts. Start with:
-
-```text
-Read README.md, MVP.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/MILESTONES.md, docs/DECISIONS.md and To-Do.md.
-
-Implement To-Do item 1 and 2 only:
-- Immich API client with pagination
-- date range filtering
-- multi-user API key support from config/env
-- normalize assets into the Asset model
-- write output/assets.json
-
-Do not implement clustering yet.
-Add or update tests where useful.
-Keep Docker workflow working.
+```bash
+cp .env.example .env
+cp config.example.yaml config.yaml
+docker compose build
+docker compose run --rm memory-engine test
 ```
+
+A quick local fallback can be useful in constrained environments, but it is not the supported setup contract:
+
+```bash
+PYTHONPATH=src python3 -m pytest -q
+```
+
+Keep changes milestone-scoped. Do not implement real clustering, Ollama naming, or Immich write/apply behavior as part of foundation or scan hardening.
+
+## Configuration
+
+`config.example.yaml` uses Docker-friendly environment interpolation:
+
+- `${NAME}` means `NAME` must be set in `.env`/environment.
+- `${NAME:-default}` uses a default when `NAME` is missing or empty.
+
+Minimal scan validation checks:
+
+- `immich.url` is present after env interpolation.
+- At least one `immich.users` entry exists.
+- Each user has `name` and `api_key_env`.
+- Every referenced API key env var is present.
+- `output.dir` defaults to `output`.
+
+## Troubleshooting
+
+- **Compose says `.env` is missing:** run `cp .env.example .env` and edit it.
+- **Missing `IMMICH_URL` or API key env var:** set it in `.env`, then rerun the Compose command.
+- **HTTP 401/403 from Immich:** verify the user API key and its permissions.
+- **HTTP 404 from Immich search:** this project assumes Immich 2.7.5 metadata search behavior; check your server version.
+- **Cannot reach Immich from Docker:** use a URL reachable from inside the container, not only from the host browser.
+- **Unexpected clusters/proposals:** expected for now. Use `output/assets.json` for validation until clustering/proposal milestones land.
+
+## CI and images
+
+GitHub Actions builds and tests the Docker image on PRs. Pushes to `main` publish maintainer-testing images to GHCR tagged `latest` and `sha-*`; PRs do not publish images.
